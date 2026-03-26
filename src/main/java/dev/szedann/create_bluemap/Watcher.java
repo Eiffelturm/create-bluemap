@@ -17,14 +17,14 @@ public class Watcher {
             try {
                 Trains.update(api);
             } catch (Exception e) {
-                Create_bluemap.LOGGER.error(e.getMessage());
+                Create_bluemap.LOGGER.error("Failed to update trains", e);
             }
         };
         Runnable trackUpdater = () -> {
             try {
                 Tracks.update(api);
             } catch (Exception e) {
-                Create_bluemap.LOGGER.error(e.getMessage());
+                Create_bluemap.LOGGER.error("Failed to update tracks", e);
             }
         };
         scheduler.scheduleAtFixedRate(trainUpdater, 0, Config.trainInterval, TimeUnit.SECONDS);
