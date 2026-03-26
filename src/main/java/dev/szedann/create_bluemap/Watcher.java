@@ -9,10 +9,24 @@ import java.util.concurrent.TimeUnit;
 
 public class Watcher {
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private static ScheduledFuture<?> future;
+    private static ScheduledFuture<?> trainFuture;
+    private static ScheduledFuture<?> trackFuture;
 
-    public static void start(BlueMapAPI api) {
+    private static void cancelScheduledTasks() {
+        if (trainFuture != null) {
+            trainFuture.cancel(false);
+            trainFuture = null;
+        }
+        if (trackFuture != null) {
+            trackFuture.cancel(false);
+            trackFuture = null;
+        }
+    }
+
+    public static synchronized void start(BlueMapAPI api) {
         Create_bluemap.LOGGER.info("Starting Create Bluemap updater");
+        cancelScheduledTasks();
+
         Runnable trainUpdater = () -> {
             try {
                 Trains.update(api);
@@ -27,12 +41,12 @@ public class Watcher {
                 Create_bluemap.LOGGER.error("Failed to update tracks", e);
             }
         };
-        scheduler.scheduleAtFixedRate(trainUpdater, 0, Config.trainInterval, TimeUnit.SECONDS);
-        scheduler.scheduleAtFixedRate(trackUpdater, 0, Config.trackInterval, TimeUnit.SECONDS);
+        trainFuture = scheduler.scheduleAtFixedRate(trainUpdater, 0, Config.trainInterval, TimeUnit.SECONDS);
+        trackFuture = scheduler.scheduleAtFixedRate(trackUpdater, 0, Config.trackInterval, TimeUnit.SECONDS);
 
     }
 
-    public static void stop() {
-        scheduler.shutdown();
+    public static synchronized void stop() {
+        cancelScheduledTasks();
     }
 }
