@@ -22,7 +22,6 @@ object Trains {
     private val manualColor = Color("#f99")
     private val scheduledColor = Color("#99f")
 
-    @JvmStatic
     fun update(api: BlueMapAPI) {
         if (Config.renderTrains) updatePOIs(api)
         if (Config.renderCarriages) updateCarriages(api)

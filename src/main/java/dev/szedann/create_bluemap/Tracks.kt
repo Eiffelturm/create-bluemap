@@ -18,7 +18,7 @@ import java.util.function.Consumer
 
 object Tracks {
     private val trackColor = Color("#fff")
-    @JvmStatic
+
     fun update(api: BlueMapAPI) {
         if (!Config.renderTracks) return
         val lineMarkerSets: MutableMap<ResourceKey<Level>, MarkerSet> = HashMap<ResourceKey<Level>, MarkerSet>()
