@@ -35,7 +35,7 @@ public class Trains {
         Map<ResourceKey<Level>, MarkerSet> POIMarkerSets = new HashMap<>();
 
         Create.RAILWAYS.trains.forEach((uuid, train) -> {
-            TrackNode node = train.carriages.get(0).getLeadingPoint().node1;
+            TrackNode node = train.carriages.getFirst().getLeadingPoint().node1;
             if (node == null)
                 return;
             ResourceKey<Level> level = node.getLocation().dimension;
@@ -45,7 +45,7 @@ public class Trains {
                         .label(String.format("Trains in %s", level.location().toShortLanguageKey())).build());
             }
 
-            Vec3 pos = train.carriages.get(0).getLeadingPoint().getPosition(train.graph);
+            Vec3 pos = train.carriages.getFirst().getLeadingPoint().getPosition(train.graph);
             var marker = POIMarker.builder()
                     .label(train.name.getString())
                     .position(pos.x, pos.y, pos.z)
@@ -55,14 +55,12 @@ public class Trains {
             POIMarkerSets.get(level).put(uuid.toString(), marker);
         });
 
-        POIMarkerSets.forEach((level, markerSet) -> {
-            api.getWorld(level).ifPresent(world -> {
-                for (BlueMapMap map : world.getMaps()) {
-                    map.getMarkerSets().put(String.format("trains-%s", level.location().toShortLanguageKey()),
-                            markerSet);
-                }
-            });
-        });
+        POIMarkerSets.forEach((level, markerSet) -> api.getWorld(level).ifPresent(world -> {
+            for (BlueMapMap map : world.getMaps()) {
+                map.getMarkerSets().put(String.format("trains-%s", level.location().toShortLanguageKey()),
+                        markerSet);
+            }
+        }));
     }
 
     private static void updateCarriages(BlueMapAPI api) {
@@ -103,13 +101,11 @@ public class Trains {
 
         });
 
-        lineMarkerMap.forEach((level, markerSet) -> {
-            api.getWorld(level).ifPresent(world -> {
-                for (BlueMapMap map : world.getMaps()) {
-                    map.getMarkerSets().put(String.format("carriages-%s", level.location().toShortLanguageKey()),
-                            markerSet);
-                }
-            });
-        });
+        lineMarkerMap.forEach((level, markerSet) -> api.getWorld(level).ifPresent(world -> {
+            for (BlueMapMap map : world.getMaps()) {
+                map.getMarkerSets().put(String.format("carriages-%s", level.location().toShortLanguageKey()),
+                        markerSet);
+            }
+        }));
     }
 }
