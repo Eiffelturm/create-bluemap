@@ -1,76 +1,72 @@
-package dev.szedann.create_bluemap;
+package dev.szedann.create_bluemap
 
-import com.flowpowered.math.vector.Vector3d;
-import com.simibubi.create.Create;
-import com.simibubi.create.content.trains.graph.TrackEdge;
-import com.simibubi.create.content.trains.graph.TrackGraph;
-import de.bluecolored.bluemap.api.BlueMapAPI;
-import de.bluecolored.bluemap.api.BlueMapMap;
-import de.bluecolored.bluemap.api.markers.LineMarker;
-import de.bluecolored.bluemap.api.markers.MarkerSet;
-import de.bluecolored.bluemap.api.math.Color;
-import de.bluecolored.bluemap.api.math.Line;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
+import com.flowpowered.math.vector.Vector3d
+import com.simibubi.create.Create
+import com.simibubi.create.content.trains.graph.TrackEdge
+import com.simibubi.create.content.trains.graph.TrackGraph
+import com.simibubi.create.content.trains.graph.TrackNodeLocation
+import de.bluecolored.bluemap.api.BlueMapAPI
+import de.bluecolored.bluemap.api.BlueMapWorld
+import de.bluecolored.bluemap.api.markers.LineMarker
+import de.bluecolored.bluemap.api.markers.MarkerSet
+import de.bluecolored.bluemap.api.math.Color
+import de.bluecolored.bluemap.api.math.Line
+import net.minecraft.resources.ResourceKey
+import net.minecraft.world.level.Level
+import java.util.*
+import java.util.function.Consumer
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+object Tracks {
+    private val trackColor = Color("#fff")
+    @JvmStatic
+    fun update(api: BlueMapAPI) {
+        if (!Config.renderTracks) return
+        val lineMarkerSets: MutableMap<ResourceKey<Level>, MarkerSet> = HashMap<ResourceKey<Level>, MarkerSet>()
 
-public class Tracks {
-    private static final Color trackColor = new Color("#fff");
-    public static void update(BlueMapAPI api) {
-        if (!Config.renderTracks) return;
-        Map<ResourceKey<Level>, MarkerSet> lineMarkerSets = new HashMap<>();
+        Create.RAILWAYS.trackNetworks.forEach { (_: UUID, graph: TrackGraph) ->
+            val edges = HashSet<TrackEdge>()
+            graph.getNodes().forEach(Consumer { graphNode: TrackNodeLocation ->
+                val node = graph.locateNode(graphNode)
+                edges.addAll(graph.getConnectionsFrom(node).values)
 
-        Create.RAILWAYS.trackNetworks.forEach((graphUuid, graph) -> {
-            var edges = new HashSet<TrackEdge>();
-            graph.getNodes().forEach(graphNode -> {
-                var node = graph.locateNode(graphNode);
-                edges.addAll(graph.getConnectionsFrom(node).values());
-
-                ResourceKey<Level> level = node.getLocation().dimension;
+                val level = node.getLocation().dimension
                 if (!lineMarkerSets.containsKey(level)) {
-                    lineMarkerSets.put(level, MarkerSet.builder()
-                            .label(String.format("Tracks in %s", level.location().toShortLanguageKey())).build());
+                    lineMarkerSets[level] = MarkerSet.builder()
+                        .label(String.format("Tracks in %s", level.location().toShortLanguageKey())).build()
                 }
-            });
-            edges.forEach(edge -> {
-                MarkerSet lineMarkerSet = lineMarkerSets.get(edge.node1.getLocation().dimension);
-                if(edge.isInterDimensional()) return;
-                Line.Builder line = Line.builder();
-                addEdge(line, edge, graph, false);
-                LineMarker marker = LineMarker.builder()
-                        .line(line.build())
-                        .lineWidth(6)
-//                        .maxDistance(300)
-                        .label("edge")
-                        .depthTestEnabled(false)
-                        .listed(false)
-                        .lineColor(trackColor)
-                        .build();
+            })
+            edges.forEach(Consumer { edge: TrackEdge ->
+                val lineMarkerSet: MarkerSet = lineMarkerSets[edge.node1.getLocation().dimension]!!
+                if (edge.isInterDimensional) return@Consumer
+                val line = Line.builder()
+                addEdge(line, edge, graph, false)
+                val marker = LineMarker.builder()
+                    .line(line.build())
+                    .lineWidth(6) //                        .maxDistance(300)
+                    .label("edge")
+                    .depthTestEnabled(false)
+                    .listed(false)
+                    .lineColor(trackColor)
+                    .build()
+                lineMarkerSet.put(edge.toString(), marker)
+            })
+        }
 
-                lineMarkerSet.put(edge.toString(), marker);
-
-            });
-        });
-
-        lineMarkerSets.forEach((level, markerSet) -> {
-            api.getWorld(level).ifPresent(world -> {
-                for (BlueMapMap map : world.getMaps()) {
-                    map.getMarkerSets().put(String.format("tracks-%s", level.location().toShortLanguageKey()),
-                            markerSet);
-                }
-            });
-        });
+        lineMarkerSets.forEach { (level: ResourceKey<Level>, markerSet: MarkerSet) ->
+            api.getWorld(level).ifPresent(
+                Consumer { world: BlueMapWorld ->
+                    for (map in world.maps) {
+                        map.markerSets[String.format("tracks-%s", level.location().toShortLanguageKey())] = markerSet
+                    }
+                })
+        }
     }
 
-    public static void addEdge(Line.Builder line, TrackEdge edge, TrackGraph graph, boolean skipFirst) {
-        int segmentCount = edge.isTurn() ? (int) (edge.getLength() / 16) + 2 : 2;
-        for (int i = skipFirst ? 1 : 0; i < segmentCount; i++) {
-            Vec3 pos = edge.getPosition(graph, (double) i / (segmentCount - 1));
-            line.addPoint(new Vector3d(pos.x, pos.y + 1, pos.z));
+    fun addEdge(line: Line.Builder, edge: TrackEdge, graph: TrackGraph, skipFirst: Boolean) {
+        val segmentCount = if (edge.isTurn) (edge.length / 16).toInt() + 2 else 2
+        for (i in (if (skipFirst) 1 else 0)..<segmentCount) {
+            val pos = edge.getPosition(graph, i.toDouble() / (segmentCount - 1))
+            line.addPoint(Vector3d(pos.x, pos.y + 1, pos.z))
         }
     }
 }

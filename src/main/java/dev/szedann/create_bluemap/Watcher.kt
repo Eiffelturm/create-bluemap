@@ -1,52 +1,52 @@
-package dev.szedann.create_bluemap;
+package dev.szedann.create_bluemap
 
-import de.bluecolored.bluemap.api.BlueMapAPI;
+import de.bluecolored.bluemap.api.BlueMapAPI
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+object Watcher {
+    private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+    private var trainFuture: ScheduledFuture<*>? = null
+    private var trackFuture: ScheduledFuture<*>? = null
 
-public class Watcher {
-    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private static ScheduledFuture<?> trainFuture;
-    private static ScheduledFuture<?> trackFuture;
-
-    private static void cancelScheduledTasks() {
+    private fun cancelScheduledTasks() {
         if (trainFuture != null) {
-            trainFuture.cancel(false);
-            trainFuture = null;
+            trainFuture!!.cancel(false)
+            trainFuture = null
         }
         if (trackFuture != null) {
-            trackFuture.cancel(false);
-            trackFuture = null;
+            trackFuture!!.cancel(false)
+            trackFuture = null
         }
     }
 
-    public static synchronized void start(BlueMapAPI api) {
-        Create_bluemap.LOGGER.info("Starting Create Bluemap updater");
-        cancelScheduledTasks();
+    @Synchronized
+    fun start(api: BlueMapAPI) {
+        Create_bluemap.LOGGER.info("Starting Create Bluemap updater")
+        cancelScheduledTasks()
 
-        Runnable trainUpdater = () -> {
+        val trainUpdater = Runnable {
             try {
-                Trains.update(api);
-            } catch (Exception e) {
-                Create_bluemap.LOGGER.error("Failed to update trains", e);
+                Trains.update(api)
+            } catch (e: Exception) {
+                Create_bluemap.LOGGER.error("Failed to update trains", e)
             }
-        };
-        Runnable trackUpdater = () -> {
+        }
+        val trackUpdater = Runnable {
             try {
-                Tracks.update(api);
-            } catch (Exception e) {
-                Create_bluemap.LOGGER.error("Failed to update tracks", e);
+                Tracks.update(api)
+            } catch (e: Exception) {
+                Create_bluemap.LOGGER.error("Failed to update tracks", e)
             }
-        };
-        trainFuture = scheduler.scheduleAtFixedRate(trainUpdater, 0, Config.trainInterval, TimeUnit.SECONDS);
-        trackFuture = scheduler.scheduleAtFixedRate(trackUpdater, 0, Config.trackInterval, TimeUnit.SECONDS);
-
+        }
+        trainFuture = scheduler.scheduleAtFixedRate(trainUpdater, 0, Config.trainInterval.toLong(), TimeUnit.SECONDS)
+        trackFuture = scheduler.scheduleAtFixedRate(trackUpdater, 0, Config.trackInterval.toLong(), TimeUnit.SECONDS)
     }
 
-    public static synchronized void stop() {
-        cancelScheduledTasks();
+    @Synchronized
+    fun stop() {
+        cancelScheduledTasks()
     }
 }

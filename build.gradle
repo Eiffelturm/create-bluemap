@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'idea'
     id 'net.neoforged.moddev' version '2.0.141'
+    id 'org.jetbrains.kotlin.jvm'
 }
 
 version = mod_version
@@ -13,6 +14,10 @@ repositories {
     maven { url = "https://maven.createmod.net" } // Create, Ponder, Flywheel
     maven { url = "https://maven.ithundxr.dev/snapshots" } // Registrate
     maven { url = "https://repo.bluecolored.de/releases" } // Bluemap
+    maven {
+        name = 'kotlinforforge'
+        url = 'https://thedarkcolour.github.io/KotlinForForge/'
+    }
 
     exclusiveContent {
         forRepository {
@@ -25,6 +30,7 @@ repositories {
             includeGroup "maven.modrinth"
         }
     }
+    mavenCentral()
 }
 
 base {
@@ -140,6 +146,8 @@ dependencies {
     implementation("com.tterrag.registrate:Registrate:${registrate_version}")
     compileOnly("de.bluecolored:bluemap-api:${bluemap_api_version}")
     runtimeOnly("maven.modrinth:bluemap:${bluemap_version}-neoforge")
+    implementation 'thedarkcolour:kotlinforforge:1.16.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
@@ -188,4 +196,7 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+kotlin {
+    jvmToolchain(21)
 }

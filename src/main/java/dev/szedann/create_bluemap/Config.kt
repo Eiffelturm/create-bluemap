@@ -1,60 +1,60 @@
-package dev.szedann.create_bluemap;
+package dev.szedann.create_bluemap
 
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.config.ModConfigEvent;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.bus.api.SubscribeEvent
+import net.neoforged.fml.common.EventBusSubscriber
+import net.neoforged.fml.event.config.ModConfigEvent.Loading
+import net.neoforged.fml.event.config.ModConfigEvent.Reloading
+import net.neoforged.neoforge.common.ModConfigSpec
 
 // An example config class. This is not required, but it's a good idea to have one to keep your config organized.
 // Demonstrates how to use Neo's config APIs
 @EventBusSubscriber(modid = Create_bluemap.MODID)
-public class Config
-{
-    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+object Config {
+    private val BUILDER = ModConfigSpec.Builder()
 
-    private static final ModConfigSpec.IntValue INTERVAL_TRAINS = BUILDER
-            .comment("Interval between train updates")
-            .defineInRange("interval", 5, 1, 30);
+    private val INTERVAL_TRAINS: ModConfigSpec.IntValue = BUILDER
+        .comment("Interval between train updates")
+        .defineInRange("interval", 5, 1, 30)
 
-    private static final ModConfigSpec.IntValue INTERVAL_TRACKS = BUILDER
-            .comment("Interval between track updates")
-            .defineInRange("interval_tracks", 30, 10, 240);
+    private val INTERVAL_TRACKS: ModConfigSpec.IntValue = BUILDER
+        .comment("Interval between track updates")
+        .defineInRange("interval_tracks", 30, 10, 240)
 
-    private static final ModConfigSpec.BooleanValue RENDER_TRACKS = BUILDER
-            .comment("Whether to render tracks")
-            .define("renderTracks", false);
+    private val RENDER_TRACKS: ModConfigSpec.BooleanValue = BUILDER
+        .comment("Whether to render tracks")
+        .define("renderTracks", false)
 
-    private static final ModConfigSpec.BooleanValue RENDER_CARRIAGES = BUILDER
-            .comment("Whether to render carriages")
-            .define("renderCarriages", true);
+    private val RENDER_CARRIAGES: ModConfigSpec.BooleanValue = BUILDER
+        .comment("Whether to render carriages")
+        .define("renderCarriages", true)
 
-    private static final ModConfigSpec.BooleanValue RENDER_TRAINS = BUILDER
-            .comment("Whether to render trains")
-            .define("renderTrains", true);
+    private val RENDER_TRAINS: ModConfigSpec.BooleanValue = BUILDER
+        .comment("Whether to render trains")
+        .define("renderTrains", true)
 
-    static final ModConfigSpec SPEC = BUILDER.build();
+    val SPEC: ModConfigSpec = BUILDER.build()
 
-    public static int trainInterval;
-    public static int trackInterval;
-    public static boolean renderTracks;
-    public static boolean renderCarriages;
-    public static boolean renderTrains ;
+    var trainInterval: Int = 0
+    var trackInterval: Int = 0
+    var renderTracks: Boolean = false
+    var renderCarriages: Boolean = false
+    var renderTrains: Boolean = false
 
-    private static void applyValues(){
-        trainInterval = INTERVAL_TRAINS.get();
-        trackInterval = INTERVAL_TRACKS.get();
-        renderTracks = RENDER_TRACKS.get();
-        renderCarriages = RENDER_CARRIAGES.get();
-        renderTrains  = RENDER_TRAINS.get();
+    private fun applyValues() {
+        trainInterval = INTERVAL_TRAINS.get()
+        trackInterval = INTERVAL_TRACKS.get()
+        renderTracks = RENDER_TRACKS.get()
+        renderCarriages = RENDER_CARRIAGES.get()
+        renderTrains = RENDER_TRAINS.get()
     }
 
     @SubscribeEvent
-    static void onLoad(final ModConfigEvent.Loading event)
-    {
-        applyValues();
+    fun onLoad(event: Loading) {
+        applyValues()
     }
+
     @SubscribeEvent
-    static void onReload(final ModConfigEvent.Reloading event){
-        applyValues();
+    fun onReload(event: Reloading) {
+        applyValues()
     }
 }
