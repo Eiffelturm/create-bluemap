@@ -5,6 +5,7 @@ import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.graph.EdgeData;
 import com.simibubi.create.content.trains.graph.TrackEdge;
 import com.simibubi.create.content.trains.graph.TrackGraph;
+import com.simibubi.create.content.trains.signal.SignalBoundary;
 import com.simibubi.create.content.trains.signal.SignalEdgeGroup;
 import de.bluecolored.bluemap.api.BlueMapAPI;
 import de.bluecolored.bluemap.api.BlueMapMap;
@@ -27,16 +28,32 @@ public class Tracks {
     private static final Color reservedColor = new Color("#ff4");
     private static final Color occupiedColor = new Color("#f44");
 
-    private static SignalBlockState getSignalBlockState(TrackEdge edge) {
-        EdgeData edgeData = edge.getEdgeData();
-        if (edgeData.hasSignalBoundaries()) return SignalBlockState.NONE;
-        UUID groupId = edgeData.getSingleSignalGroup();
+    private static SignalBlockState groupState(UUID groupId) {
         if (groupId == null || groupId.equals(EdgeData.passiveGroup)) return SignalBlockState.NONE;
         SignalEdgeGroup group = Create.RAILWAYS.signalEdgeGroups.get(groupId);
         if (group == null) return SignalBlockState.NONE;
         if (!group.trains.isEmpty()) return SignalBlockState.OCCUPIED;
         if (group.reserved != null) return SignalBlockState.RESERVED;
         return SignalBlockState.CLEAR;
+    }
+
+    private static SignalBlockState getSignalBlockState(TrackEdge edge) {
+        EdgeData edgeData = edge.getEdgeData();
+
+        if (!edgeData.hasSignalBoundaries()) {
+            return groupState(edgeData.getSingleSignalGroup());
+        }
+
+        // Edge has signal boundaries on it — collect the worst state from all adjacent groups
+        SignalBlockState worst = SignalBlockState.NONE;
+        for (var point : edgeData.getPoints()) {
+            if (!(point instanceof SignalBoundary signal)) continue;
+            for (boolean primary : new boolean[]{true, false}) {
+                SignalBlockState s = groupState(signal.groups.get(primary));
+                if (s.ordinal() > worst.ordinal()) worst = s;
+            }
+        }
+        return worst;
     }
 
     private static Color getEdgeColor(SignalBlockState state) {
