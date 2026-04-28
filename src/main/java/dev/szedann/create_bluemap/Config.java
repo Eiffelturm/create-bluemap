@@ -36,6 +36,10 @@ public class Config
             .comment("Whether to render stations")
             .define("renderStations", true);
 
+    private static final ModConfigSpec.BooleanValue RENDER_SIGNALS = BUILDER
+            .comment("Whether to render signals")
+            .define("renderSignals", true);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int trainInterval;
@@ -44,6 +48,7 @@ public class Config
     public static boolean renderCarriages;
     public static boolean renderTrains;
     public static boolean renderStations;
+    public static boolean renderSignals;
 
     private static void applyValues(){
         trainInterval = INTERVAL_TRAINS.get();
@@ -52,6 +57,7 @@ public class Config
         renderCarriages = RENDER_CARRIAGES.get();
         renderTrains = RENDER_TRAINS.get();
         renderStations = RENDER_STATIONS.get();
+        renderSignals = RENDER_SIGNALS.get();
     }
 
     @SubscribeEvent

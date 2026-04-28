@@ -12,6 +12,7 @@ public class Watcher {
     private static ScheduledFuture<?> trainFuture;
     private static ScheduledFuture<?> trackFuture;
     private static ScheduledFuture<?> stationFuture;
+    private static ScheduledFuture<?> signalFuture;
 
     private static void cancelScheduledTasks() {
         if (trainFuture != null) {
@@ -25,6 +26,10 @@ public class Watcher {
         if (stationFuture != null) {
             stationFuture.cancel(false);
             stationFuture = null;
+        }
+        if (signalFuture != null) {
+            signalFuture.cancel(false);
+            signalFuture = null;
         }
     }
 
@@ -53,9 +58,17 @@ public class Watcher {
                 Create_bluemap.LOGGER.error("Failed to update stations", e);
             }
         };
+        Runnable signalUpdater = () -> {
+            try {
+                Signals.update(api);
+            } catch (Exception e) {
+                Create_bluemap.LOGGER.error("Failed to update signals", e);
+            }
+        };
         trainFuture = scheduler.scheduleAtFixedRate(trainUpdater, 0, Config.trainInterval, TimeUnit.SECONDS);
         trackFuture = scheduler.scheduleAtFixedRate(trackUpdater, 0, Config.trackInterval, TimeUnit.SECONDS);
         stationFuture = scheduler.scheduleAtFixedRate(stationUpdater, 0, Config.trackInterval, TimeUnit.SECONDS);
+        signalFuture = scheduler.scheduleAtFixedRate(signalUpdater, 0, Config.trainInterval, TimeUnit.SECONDS);
 
     }
 

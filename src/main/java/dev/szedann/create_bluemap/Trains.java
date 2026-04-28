@@ -46,8 +46,11 @@ public class Trains {
             }
 
             Vec3 pos = train.carriages.getFirst().getLeadingPoint().getPosition(train.graph);
+            String name = train.name.getString();
+            String title = train.runtime.currentTitle;
+            String label = (title != null && !title.isEmpty()) ? name + " → " + title : name;
             var marker = POIMarker.builder()
-                    .label(train.name.getString())
+                    .label(label)
                     .position(pos.x, pos.y, pos.z)
                     .maxDistance(150)
                     .build();
