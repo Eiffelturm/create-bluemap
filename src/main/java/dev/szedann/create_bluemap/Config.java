@@ -8,7 +8,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 @EventBusSubscriber(modid = Create_bluemap.MODID)
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
-    static final ModConfigSpec SPEC = BUILDER.build();
+
     private static final ModConfigSpec.IntValue INTERVAL_TRAINS = BUILDER
             .comment("Interval between train updates in seconds")
             .defineInRange("interval", 5, 1, 30);
@@ -30,6 +30,9 @@ public class Config {
     private static final ModConfigSpec.BooleanValue RENDER_SIGNALS = BUILDER
             .comment("Whether to render signals")
             .define("renderSignals", true);
+
+    static final ModConfigSpec SPEC = BUILDER.build();
+
     public static int trainInterval;
     public static int trackInterval;
     public static boolean renderTracks;
