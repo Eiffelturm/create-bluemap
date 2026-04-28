@@ -17,15 +17,18 @@ import java.util.Map;
 public class Stations {
     public static void update(BlueMapAPI api) {
         if (!Config.renderStations) return;
+
         Map<ResourceKey<Level>, MarkerSet> markerSets = new HashMap<>();
 
         Create.RAILWAYS.trackNetworks.forEach((uuid, graph) -> {
             for (GlobalStation station : graph.getPoints(EdgePointType.STATION)) {
                 if (station.blockEntityPos == null || station.blockEntityDimension == null) continue;
+
                 ResourceKey<Level> level = station.blockEntityDimension;
                 markerSets.computeIfAbsent(level, k -> MarkerSet.builder()
                         .label(String.format("Stations in %s", k.location().toShortLanguageKey()))
                         .build());
+
                 BlockPos pos = station.blockEntityPos;
                 markerSets.get(level).put(station.id.toString(), POIMarker.builder()
                         .label(station.name)
@@ -35,10 +38,14 @@ public class Stations {
             }
         });
 
-        markerSets.forEach((level, markerSet) -> api.getWorld(level).ifPresent(world -> {
-            for (BlueMapMap map : world.getMaps()) {
-                map.getMarkerSets().put(String.format("stations-%s", level.location().toShortLanguageKey()), markerSet);
-            }
-        }));
+        markerSets.forEach((level, markerSet) ->
+                api.getWorld(level).ifPresent(world -> {
+                    for (BlueMapMap map : world.getMaps()) {
+                        map.getMarkerSets().put(
+                                String.format("stations-%s", level.location().toShortLanguageKey()),
+                                markerSet);
+                    }
+                })
+        );
     }
 }

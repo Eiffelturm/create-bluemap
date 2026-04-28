@@ -17,11 +17,13 @@ import java.util.Map;
 public class Signals {
     public static void update(BlueMapAPI api) {
         if (!Config.renderSignals) return;
+
         Map<ResourceKey<Level>, MarkerSet> markerSets = new HashMap<>();
 
         Create.RAILWAYS.trackNetworks.forEach((uuid, graph) -> {
             for (SignalBoundary signal : graph.getPoints(EdgePointType.SIGNAL)) {
                 if (signal.edgeLocation == null) continue;
+
                 ResourceKey<Level> level = signal.edgeLocation.getFirst().dimension;
                 if (level == null) continue;
 
@@ -32,7 +34,10 @@ public class Signals {
 
                 for (boolean primary : new boolean[]{true, false}) {
                     SignalState state = signal.cachedStates.get(primary);
-                    String stateText = (state == null || state == SignalState.INVALID) ? "Signal" : "Signal [" + state.name() + "]";
+                    String stateText = (state == null || state == SignalState.INVALID)
+                            ? "Signal"
+                            : "Signal [" + state.name() + "]";
+
                     signal.blockEntities.get(primary).keySet().forEach(pos ->
                             markerSets.get(level).put(
                                     signal.id + "-" + (primary ? "p" : "s") + "-" + pos.getX() + "_" + pos.getY() + "_" + pos.getZ(),
@@ -47,10 +52,14 @@ public class Signals {
             }
         });
 
-        markerSets.forEach((level, markerSet) -> api.getWorld(level).ifPresent(world -> {
-            for (BlueMapMap map : world.getMaps()) {
-                map.getMarkerSets().put(String.format("signals-%s", level.location().toShortLanguageKey()), markerSet);
-            }
-        }));
+        markerSets.forEach((level, markerSet) ->
+                api.getWorld(level).ifPresent(world -> {
+                    for (BlueMapMap map : world.getMaps()) {
+                        map.getMarkerSets().put(
+                                String.format("signals-%s", level.location().toShortLanguageKey()),
+                                markerSet);
+                    }
+                })
+        );
     }
 }

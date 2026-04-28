@@ -19,14 +19,17 @@ public class Watcher {
             trainFuture.cancel(false);
             trainFuture = null;
         }
+
         if (trackFuture != null) {
             trackFuture.cancel(false);
             trackFuture = null;
         }
+
         if (stationFuture != null) {
             stationFuture.cancel(false);
             stationFuture = null;
         }
+
         if (signalFuture != null) {
             signalFuture.cancel(false);
             signalFuture = null;
@@ -44,20 +47,7 @@ public class Watcher {
                 Create_bluemap.LOGGER.error("Failed to update trains", e);
             }
         };
-        Runnable trackUpdater = () -> {
-            try {
-                Tracks.update(api);
-            } catch (Exception e) {
-                Create_bluemap.LOGGER.error("Failed to update tracks", e);
-            }
-        };
-        Runnable stationUpdater = () -> {
-            try {
-                Stations.update(api);
-            } catch (Exception e) {
-                Create_bluemap.LOGGER.error("Failed to update stations", e);
-            }
-        };
+
         Runnable signalUpdater = () -> {
             try {
                 Signals.update(api);
@@ -65,11 +55,28 @@ public class Watcher {
                 Create_bluemap.LOGGER.error("Failed to update signals", e);
             }
         };
+
+        Runnable trackUpdater = () -> {
+            try {
+                Tracks.update(api);
+            } catch (Exception e) {
+                Create_bluemap.LOGGER.error("Failed to update tracks", e);
+            }
+        };
+
+        Runnable stationUpdater = () -> {
+            try {
+                Stations.update(api);
+            } catch (Exception e) {
+                Create_bluemap.LOGGER.error("Failed to update stations", e);
+            }
+        };
+
         trainFuture = scheduler.scheduleAtFixedRate(trainUpdater, 0, Config.trainInterval, TimeUnit.SECONDS);
-        trackFuture = scheduler.scheduleAtFixedRate(trackUpdater, 0, Config.trackInterval, TimeUnit.SECONDS);
-        stationFuture = scheduler.scheduleAtFixedRate(stationUpdater, 0, Config.trackInterval, TimeUnit.SECONDS);
         signalFuture = scheduler.scheduleAtFixedRate(signalUpdater, 0, Config.trainInterval, TimeUnit.SECONDS);
 
+        trackFuture = scheduler.scheduleAtFixedRate(trackUpdater, 0, Config.trackInterval, TimeUnit.SECONDS);
+        stationFuture = scheduler.scheduleAtFixedRate(stationUpdater, 0, Config.trackInterval, TimeUnit.SECONDS);
     }
 
     public static synchronized void stop() {

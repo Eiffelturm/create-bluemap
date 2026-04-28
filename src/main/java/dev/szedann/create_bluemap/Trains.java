@@ -24,72 +24,69 @@ public class Trains {
     private static final Color scheduledColor = new Color("#99f");
 
     public static void update(BlueMapAPI api) {
-        if (Config.renderTrains)
-            updatePOIs(api);
-        if (Config.renderCarriages)
-            updateCarriages(api);
-
+        if (Config.renderTrains) updatePOIs(api);
+        if (Config.renderCarriages) updateCarriages(api);
     }
 
     private static void updatePOIs(BlueMapAPI api) {
-        Map<ResourceKey<Level>, MarkerSet> POIMarkerSets = new HashMap<>();
+        Map<ResourceKey<Level>, MarkerSet> poiMarkerSets = new HashMap<>();
 
         Create.RAILWAYS.trains.forEach((uuid, train) -> {
             TrackNode node = train.carriages.getFirst().getLeadingPoint().node1;
-            if (node == null)
-                return;
+            if (node == null) return;
+
             ResourceKey<Level> level = node.getLocation().dimension;
-            if (!POIMarkerSets.containsKey(level)) {
-                POIMarkerSets.put(level, MarkerSet.builder()
-                        .defaultHidden(true)
-                        .label(String.format("Trains in %s", level.location().toShortLanguageKey())).build());
-            }
+            poiMarkerSets.computeIfAbsent(level, k -> MarkerSet.builder()
+                    .defaultHidden(true)
+                    .label(String.format("Trains in %s", k.location().toShortLanguageKey()))
+                    .build());
 
             Vec3 pos = train.carriages.getFirst().getLeadingPoint().getPosition(train.graph);
             String name = train.name.getString();
             String title = train.runtime.currentTitle;
             String label = (title != null && !title.isEmpty()) ? name + " → " + title : name;
-            var marker = POIMarker.builder()
+
+            poiMarkerSets.get(level).put(uuid.toString(), POIMarker.builder()
                     .label(label)
                     .position(pos.x, pos.y, pos.z)
                     .maxDistance(150)
-                    .build();
-
-            POIMarkerSets.get(level).put(uuid.toString(), marker);
+                    .build());
         });
 
-        POIMarkerSets.forEach((level, markerSet) -> api.getWorld(level).ifPresent(world -> {
-            for (BlueMapMap map : world.getMaps()) {
-                map.getMarkerSets().put(String.format("trains-%s", level.location().toShortLanguageKey()),
-                        markerSet);
-            }
-        }));
+        poiMarkerSets.forEach((level, markerSet) ->
+                api.getWorld(level).ifPresent(world -> {
+                    for (BlueMapMap map : world.getMaps()) {
+                        map.getMarkerSets().put(
+                                String.format("trains-%s", level.location().toShortLanguageKey()),
+                                markerSet);
+                    }
+                })
+        );
     }
 
     private static void updateCarriages(BlueMapAPI api) {
         Map<ResourceKey<Level>, MarkerSet> lineMarkerMap = new HashMap<>();
 
         Create.RAILWAYS.trains.forEach((uuid, train) -> {
-
             int i = 0;
             for (Carriage carriage : train.carriages) {
                 TrackNode node = carriage.getLeadingPoint().node1;
-                if (node == null)
-                    return;
-                ResourceKey<Level> level = node.getLocation().dimension;
+                if (node == null) return;
 
-                if (carriage.getTrailingPoint().node2.getLocation().dimension != level)
-                    return;
-                if (!lineMarkerMap.containsKey(level)) {
-                    lineMarkerMap.put(level, MarkerSet.builder()
-                            .label(String.format("Carriages in %s", level.location().toShortLanguageKey())).build());
-                }
+                ResourceKey<Level> level = node.getLocation().dimension;
+                if (carriage.getTrailingPoint().node2.getLocation().dimension != level) return;
+
+                lineMarkerMap.computeIfAbsent(level, k -> MarkerSet.builder()
+                        .label(String.format("Carriages in %s", k.location().toShortLanguageKey()))
+                        .build());
+
                 i++;
                 Vec3 p1 = carriage.getLeadingPoint().getPosition(train.graph);
                 Vec3 p2 = carriage.getTrailingPoint().getPosition(train.graph);
                 boolean front = train.currentlyBackwards ? i == train.carriages.size() : i == 1;
                 boolean scheduled = train.runtime.state == ScheduleRuntime.State.IN_TRANSIT;
-                lineMarkerMap.get(level).put(train.id.toString() + "-" + carriage.id, LineMarker.builder()
+
+                lineMarkerMap.get(level).put(train.id + "-" + carriage.id, LineMarker.builder()
                         .label(String.format("%s carriage %s", train.name.getString(), i))
                         .line(Line.builder()
                                 .addPoint(new Vector3d(p1.x, p1.y + 1, p1.z))
@@ -101,14 +98,16 @@ public class Trains {
                         // .maxDistance(400)
                         .build());
             }
-
         });
 
-        lineMarkerMap.forEach((level, markerSet) -> api.getWorld(level).ifPresent(world -> {
-            for (BlueMapMap map : world.getMaps()) {
-                map.getMarkerSets().put(String.format("carriages-%s", level.location().toShortLanguageKey()),
-                        markerSet);
-            }
-        }));
+        lineMarkerMap.forEach((level, markerSet) ->
+                api.getWorld(level).ifPresent(world -> {
+                    for (BlueMapMap map : world.getMaps()) {
+                        map.getMarkerSets().put(
+                                String.format("carriages-%s", level.location().toShortLanguageKey()),
+                                markerSet);
+                    }
+                })
+        );
     }
 }

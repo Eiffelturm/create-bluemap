@@ -27,8 +27,6 @@ public class Tracks {
     private static final Color reservedColor = new Color("#ff4");
     private static final Color occupiedColor = new Color("#f44");
 
-    private enum SignalBlockState { NONE, CLEAR, RESERVED, OCCUPIED }
-
     private static SignalBlockState getSignalBlockState(TrackEdge edge) {
         EdgeData edgeData = edge.getEdgeData();
         if (edgeData.hasSignalBoundaries()) return SignalBlockState.NONE;
@@ -61,10 +59,12 @@ public class Tracks {
 
     public static void update(BlueMapAPI api) {
         if (!Config.renderTracks) return;
+
         Map<ResourceKey<Level>, MarkerSet> lineMarkerSets = new HashMap<>();
 
         Create.RAILWAYS.trackNetworks.forEach((graphUuid, graph) -> {
             var edges = new HashSet<TrackEdge>();
+
             graph.getNodes().forEach(graphNode -> {
                 var node = graph.locateNode(graphNode);
                 edges.addAll(graph.getConnectionsFrom(node).values());
@@ -72,15 +72,20 @@ public class Tracks {
                 ResourceKey<Level> level = node.getLocation().dimension;
                 if (!lineMarkerSets.containsKey(level)) {
                     lineMarkerSets.put(level, MarkerSet.builder()
-                            .label(String.format("Tracks in %s", level.location().toShortLanguageKey())).build());
+                            .label(String.format("Tracks in %s", level.location().toShortLanguageKey()))
+                            .build());
                 }
             });
+
             edges.forEach(edge -> {
+                if (edge.isInterDimensional()) return;
+
                 MarkerSet lineMarkerSet = lineMarkerSets.get(edge.node1.getLocation().dimension);
-                if(edge.isInterDimensional()) return;
+                SignalBlockState state = getSignalBlockState(edge);
+
                 Line.Builder line = Line.builder();
                 addEdge(line, edge, graph, false);
-                SignalBlockState state = getSignalBlockState(edge);
+
                 LineMarker marker = LineMarker.builder()
                         .line(line.build())
                         .lineWidth(6)
@@ -92,25 +97,28 @@ public class Tracks {
                         .build();
 
                 lineMarkerSet.put(edge.toString(), marker);
-
             });
         });
 
-        lineMarkerSets.forEach((level, markerSet) -> {
-            api.getWorld(level).ifPresent(world -> {
-                for (BlueMapMap map : world.getMaps()) {
-                    map.getMarkerSets().put(String.format("tracks-%s", level.location().toShortLanguageKey()),
-                            markerSet);
-                }
-            });
-        });
+        lineMarkerSets.forEach((level, markerSet) ->
+                api.getWorld(level).ifPresent(world -> {
+                    for (BlueMapMap map : world.getMaps()) {
+                        map.getMarkerSets().put(
+                                String.format("tracks-%s", level.location().toShortLanguageKey()),
+                                markerSet);
+                    }
+                })
+        );
     }
 
     public static void addEdge(Line.Builder line, TrackEdge edge, TrackGraph graph, boolean skipFirst) {
         int segmentCount = edge.isTurn() ? (int) (edge.getLength() / 16) + 2 : 2;
+
         for (int i = skipFirst ? 1 : 0; i < segmentCount; i++) {
             Vec3 pos = edge.getPosition(graph, (double) i / (segmentCount - 1));
             line.addPoint(new Vector3d(pos.x, pos.y + 1, pos.z));
         }
     }
+
+    private enum SignalBlockState {NONE, CLEAR, RESERVED, OCCUPIED}
 }
