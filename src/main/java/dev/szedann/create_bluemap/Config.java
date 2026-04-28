@@ -32,20 +32,26 @@ public class Config
             .comment("Whether to render trains")
             .define("renderTrains", true);
 
+    private static final ModConfigSpec.BooleanValue RENDER_STATIONS = BUILDER
+            .comment("Whether to render stations")
+            .define("renderStations", true);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int trainInterval;
     public static int trackInterval;
     public static boolean renderTracks;
     public static boolean renderCarriages;
-    public static boolean renderTrains ;
+    public static boolean renderTrains;
+    public static boolean renderStations;
 
     private static void applyValues(){
         trainInterval = INTERVAL_TRAINS.get();
         trackInterval = INTERVAL_TRACKS.get();
         renderTracks = RENDER_TRACKS.get();
         renderCarriages = RENDER_CARRIAGES.get();
-        renderTrains  = RENDER_TRAINS.get();
+        renderTrains = RENDER_TRAINS.get();
+        renderStations = RENDER_STATIONS.get();
     }
 
     @SubscribeEvent
